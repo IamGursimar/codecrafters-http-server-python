@@ -13,10 +13,13 @@ def main():
         while True:
             data = conn.recv(1024)
             request_data = data.decode().split("\r\n")
+            response = b"HTTP/1.1 200 OK\r\n\r\n"
             #  ['GET / HTTP/1.1', 'Host: localhost:4221', '', '']
             if not data:
                 break
-            conn.sendall(b"HTTP/1.1 200 OK\r\n\r\n")
+            if request_data[0].split(" ")[1] != "/":
+                response = b"HTTP/1.1 404 Not Found\r\n\r\n"
+            conn.sendall(response)
 
 
 if __name__ == "__main__":
