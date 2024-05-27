@@ -13,11 +13,8 @@ def main():
         while True:
             data = conn.recv(1024)
             request_data = data.decode().split("\r\n")
-            # TODO: Content length should have dynamic length.
-            # TODO: Add echo return value instead of abc.
             response = b"HTTP/1.1 404 Not Found\r\n\r\n"
             request_path = request_data[0].split(" ")[1]
-            #  ['GET / HTTP/1.1', 'Host: localhost:4221', '', '']
             if not data:
                 break
 
@@ -26,6 +23,9 @@ def main():
             elif "echo" in request_path:
                 echo_val = request_path.split("/")[-1]
                 response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(echo_val)}\r\n\r\n{echo_val}".encode()
+            elif "user-agent" in request_path:
+                user_agent_header_data = request_data[2].split(" ")[1]
+                response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(user_agent_header_data)}\r\n\r\n{user_agent_header_data}".encode()
             conn.sendall(response)
 
 
