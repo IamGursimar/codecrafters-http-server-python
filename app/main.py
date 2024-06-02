@@ -1,14 +1,12 @@
 import socket
+from threading import Thread
 
 """
 run ./your_server.sh in one terminal session, and nc -vz 127.0.0.1 4221 in another.
 """
 
 
-def main():
-
-    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
-    conn, addr = server_socket.accept()  # wait for client
+def request_handler(conn):
     with conn:
         while True:
             data = conn.recv(1024)
@@ -17,7 +15,6 @@ def main():
             request_path = request_data[0].split(" ")[1]
             if not data:
                 break
-
             if request_path == "/":
                 response = b"HTTP/1.1 200 OK\r\n\r\n"
             elif "echo" in request_path:
@@ -27,6 +24,14 @@ def main():
                 user_agent_header_data = request_data[2].split(" ")[1]
                 response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(user_agent_header_data)}\r\n\r\n{user_agent_header_data}".encode()
             conn.sendall(response)
+
+
+def main():
+
+    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
+    while True:
+        conn, _ = server_socket.accept()
+        Thread(target=request_handler, args=(conn,)).start()
 
 
 if __name__ == "__main__":
