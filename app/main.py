@@ -1,4 +1,7 @@
 import socket
+import os
+# Will need this to access command line arguments.
+import sys
 from threading import Thread
 
 """
@@ -7,6 +10,8 @@ run ./your_server.sh in one terminal session, and nc -vz 127.0.0.1 4221 in anoth
 
 
 def request_handler(conn):
+    if len(sys.argv) == 3:
+        directory_location = sys.argv[-1]
     with conn:
         while True:
             data = conn.recv(1024)
@@ -23,6 +28,12 @@ def request_handler(conn):
             elif "user-agent" in request_path:
                 user_agent_header_data = request_data[2].split(" ")[1]
                 response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(user_agent_header_data)}\r\n\r\n{user_agent_header_data}".encode()
+            elif "/files/" in request_path:
+                if os.path.exists(f"{directory_location}{request_path.split("/")[-1]}"):
+                    with open(f"{directory_location}{request_path.split("/")[-1]}") as f:
+                        file_contents = f.read()
+                    response = f"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {len(file_contents)}\r\n\r\n{file_contents}".encode()
+
             conn.sendall(response)
 
 
