@@ -9,7 +9,7 @@ from threading import Thread
 run ./your_server.sh in one terminal session, and nc -vz 127.0.0.1 4221 in another.
 """
 
-
+accepted_encoding_types = ["gzip",]
 def request_handler(conn):
     if len(sys.argv) == 3:
         directory_location = sys.argv[-1]
@@ -21,10 +21,9 @@ def request_handler(conn):
             request_data = data.decode().split("\r\n")
             response = b"HTTP/1.1 404 Not Found\r\n\r\n"
             request_type, request_path = request_data[0].split(" ", 1)
-            # Old version
-            request_path = request_path.split(" ")[0]
-            print(request_data)
-            print(request_path)
+            encoding_type = request_data[2].split(": ")[-1]
+            request_path = request_path.split(" ")[0] 
+            
             if request_type == "POST" and "/files/" in request_path:
                 file_name = request_path.split("/")[-1]
                 file_save_location = f"{directory_location}{file_name}"
@@ -35,11 +34,14 @@ def request_handler(conn):
 
             if request_type == "GET":
                 if request_path == "/":
-                    print("Inside 200 Get path")
                     response = b"HTTP/1.1 200 OK\r\n\r\n"
+
                 elif "echo" in request_path:
                     echo_val = request_path.split("/")[-1]
-                    response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(echo_val)}\r\n\r\n{echo_val}".encode()
+                    if encoding_type in accepted_encoding_types:
+                        response = f"HTTP/1.1 200 OK\r\nContent-Encoding:{encoding_type}\r\nContent-Type: text/plain\r\nContent-Length: {len(echo_val)}\r\n\r\n{echo_val}".encode()
+                    else:
+                        response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(echo_val)}\r\n\r\n{echo_val}".encode()
                 elif "user-agent" in request_path:
                     user_agent_header_data = request_data[2].split(" ")[1]
                     response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(user_agent_header_data)}\r\n\r\n{user_agent_header_data}".encode()
