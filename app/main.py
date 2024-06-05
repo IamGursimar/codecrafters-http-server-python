@@ -1,6 +1,10 @@
 import os
 import socket
 
+import gzip
+
+
+
 # Will need this to access command line arguments.
 import sys
 from threading import Thread
@@ -41,7 +45,8 @@ def request_handler(conn):
                 elif "echo" in request_path:
                     echo_val = request_path.split("/")[-1]
                     if accepted_encoding_types in given_encodings:
-                        response = f"HTTP/1.1 200 OK\r\nContent-Encoding:{accepted_encoding_types}\r\nContent-Type: text/plain\r\nContent-Length: {len(echo_val)}\r\n\r\n{echo_val}".encode()
+                        compressed_val = gzip.compress(str.encode(echo_val))
+                        response = f"HTTP/1.1 200 OK\r\nContent-Encoding:{accepted_encoding_types}\r\nContent-Type: text/plain\r\nContent-Length: {len(compressed_val)}\r\n\r\n".encode() + compressed_val
                     else:
                         response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(echo_val)}\r\n\r\n{echo_val}".encode()
                 elif "user-agent" in request_path:
