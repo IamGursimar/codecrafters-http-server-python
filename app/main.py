@@ -9,7 +9,7 @@ from threading import Thread
 run ./your_server.sh in one terminal session, and nc -vz 127.0.0.1 4221 in another.
 """
 
-accepted_encoding_types = ["gzip",]
+accepted_encoding_types = "gzip"
 def request_handler(conn):
     if len(sys.argv) == 3:
         directory_location = sys.argv[-1]
@@ -22,6 +22,8 @@ def request_handler(conn):
             response = b"HTTP/1.1 404 Not Found\r\n\r\n"
             request_type, request_path = request_data[0].split(" ", 1)
             encoding_type = request_data[2].split(": ")[-1]
+            given_encodings = [x.strip() for x in encoding_type.split(',')]
+            # given_encodings = encoding_type.split(",")
             request_path = request_path.split(" ")[0] 
             
             if request_type == "POST" and "/files/" in request_path:
@@ -38,8 +40,8 @@ def request_handler(conn):
 
                 elif "echo" in request_path:
                     echo_val = request_path.split("/")[-1]
-                    if encoding_type in accepted_encoding_types:
-                        response = f"HTTP/1.1 200 OK\r\nContent-Encoding:{encoding_type}\r\nContent-Type: text/plain\r\nContent-Length: {len(echo_val)}\r\n\r\n{echo_val}".encode()
+                    if accepted_encoding_types in given_encodings:
+                        response = f"HTTP/1.1 200 OK\r\nContent-Encoding:{accepted_encoding_types}\r\nContent-Type: text/plain\r\nContent-Length: {len(echo_val)}\r\n\r\n{echo_val}".encode()
                     else:
                         response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(echo_val)}\r\n\r\n{echo_val}".encode()
                 elif "user-agent" in request_path:
